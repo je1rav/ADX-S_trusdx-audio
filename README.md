@@ -56,6 +56,8 @@ ADX-Sのファームウェアは，(tr)uSDXのCATのドキュメントとtrusdx-
 	PC側でtrusdx-audioプログラムを作動させなければ，元のままです（なぜかCATのリグ設定TS2000でないとうまく動かない. PTTはVOXに設定）．    
 	Hamlibの挙動はよくわかりません．
 
+  	AndroidスマホのFT8CNでも，リグ設定を"(tr)uSDX(audio over cat)"に設定すれば使用可能でした(PTT方式は"CAT")．   
+
 #### 必要部品  
 	オーディオIC LM386：1個
 	積層セラミックコンデンサー105：1個
