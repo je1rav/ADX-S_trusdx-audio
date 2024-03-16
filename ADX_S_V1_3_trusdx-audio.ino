@@ -544,7 +544,7 @@ void CAT_control(void)
       if (Audio_stream == 2){
         TX_streaming = 1;
       }
-      sent = "TX1;";
+      sent = "TX0;";
     }
   }
 
@@ -659,7 +659,7 @@ void CAT_control(void)
       if (Audio_stream == 2){
         TX_streaming = 1;
       }
-      sent = "TX1;";
+      sent = "TX0;";
     }
   }
   else if (command2 == "RX")  
@@ -692,9 +692,9 @@ void CAT_control(void)
     }
   }
 if  (bufferIndex > 0) 
-  Serial.print(sent);
-  Serial.flush();
   if (bufferIndex == 2) Serial.print(sent2);
+  Serial.flush();
+  Serial.print(sent);
   Serial.flush();
   if (RX_streaming == 1){
     RX_receive();
