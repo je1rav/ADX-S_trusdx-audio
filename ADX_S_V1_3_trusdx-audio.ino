@@ -235,20 +235,20 @@ void setup()
   if (digitalRead(UP) == LOW ) {     //You can go on after band select, if things are no problem.
     Band_Select();
   }
-  /*
+/*
   if (digitalRead(TXSW) == LOW ) {     //You can go on after band select, if things are no problem.
     bfo = 0;
     ifreq = 455000UL;
   }
-  */
+*/
 
-  /*  moved to the sub function "void start_analog_comparator()"
+/*  moved to the function "void start_analog_comparator()"
   // ----------------Timer1 and analog comparator----------------------
   TCCR1A = 0x00;
   TCCR1B = 0x01; // Timer1 Timer 16 MHz
   TCCR1B = 0x81; // Timer1 Input Capture Noise Canceller
   ACSR |= (1<<ACIC);  // Analog Comparator Capture Input
-  */
+*/
   start_analog_comparator();
 
   pinMode(FSK_INPUT, INPUT); //PD7 = AN1 = HiZ, PD6 = AN0 = 0
@@ -330,7 +330,7 @@ void loop()
   // The following code is from JE1RAV https://github.com/je1rav/QP-7C
   //(Using 3 cycles for timer sampling to improve the precision of frequency measurements)
   //(Against overflow in low frequency measurements)
-  
+    
     int FSK = 1;
     int FSKtx = 0;
 
@@ -650,6 +650,17 @@ void CAT_control(void)
   {  
     //sent2 = "ID019;";   //TS-2000
     sent2 = "ID020;";   //TS-480
+  }
+  else if (command2 == "TX")
+  {   
+    if (crossbandcheck()){      
+      TX_transmit();
+      RX_streaming = 0;
+      if (Audio_stream == 2){
+        TX_streaming = 1;
+      }
+      sent = "TX1;";
+    }
   }
   else if (command2 == "RX")  
   {  
