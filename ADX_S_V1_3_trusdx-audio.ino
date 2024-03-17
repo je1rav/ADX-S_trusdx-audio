@@ -107,6 +107,7 @@ long ADC_offset;
 int Audio_stream = 0;
 int RX_streaming = 0;
 int TX_streaming = 0;
+int TX_streaming_counter = 0;
 
 unsigned long old_freq;
 int16_t mono_prev_p=0; 
@@ -539,10 +540,13 @@ void CAT_control(void)
   if (command == "TX")
   {   
     if (crossbandcheck()){      
-      TX_transmit();
       RX_streaming = 0;
       if (Audio_stream == 2){
         TX_streaming = 1;
+        TX_streaming_counter = 0;
+      }
+      else {
+        TX_transmit();
       }
       sent = "TX0;";
     }
@@ -654,10 +658,13 @@ void CAT_control(void)
   else if (command2 == "TX")
   {   
     if (crossbandcheck()){      
-      TX_transmit();
       RX_streaming = 0;
       if (Audio_stream == 2){
         TX_streaming = 1;
+        TX_streaming_counter = 0;
+      }
+      else {
+        TX_transmit();
       }
       sent = "TX0;";
     }
@@ -1177,12 +1184,12 @@ void stop_RX_streaming(void) {
 // This is called at 7812 Hz to send the received data.
 ISR(TIMER1_COMPA_vect) {
   if (TX_State == 0){
+    int RXsignal = analogRead(ADC_INPUT);
     if (RX_streaming == 0)
     {
       RX_streaming = 1;
       Serial.print("US");
     }
-    int RXsignal = analogRead(ADC_INPUT);
     uint8_t RXsent = (RXsignal-ADC_offset)/4 + 128;  
     if (RXsent == 59) RXsent = 58;
     Serial.write(RXsent);
@@ -1259,7 +1266,12 @@ void trusdr_audio(int mono){
   }
   
   unsigned long time_now = millis();
+  if (TX_streaming_counter == 10){ //delay to start tramsmit at the begining of the transmission
+    TX_transmit();
+  }
   if (((time_now - time_prev) > 10) && ((cycle_p + cycle_n) > 4)) {
+    TX_streaming_counter++;
+    if (TX_streaming_counter > 254) TX_streaming_counter = 11;
     mean_audio_freq = (mean_audio_freq_p + mean_audio_freq_n)/(cycle_p + cycle_n);
     si5351.set_freq((freq * 100ULL + mean_audio_freq * 100ULL), SI5351_CLK0);
     time_prev = time_now;
