@@ -607,7 +607,7 @@ void CAT_control(void)
       sent = "IF" // Return 11 digit frequency in Hz.  
           + String("00000000000").substring(0,11-(String(freq).length()))   
           //+ String(freq) + "0000" + "+" + "00000" + "0" + "0" + "0" + "00" + "1" + String(CAT_mode) + "0" + "0" + "0" + "0" + "00" + "0" + ";";   //TS-2000
-          + String(freq) + "00000+000000000020000000;";   //TS-480 
+          + String(freq) + "00000+000000000120000000;";   //TS-480 
     } 
     else
     {  
