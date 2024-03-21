@@ -66,3 +66,12 @@ ADX-Sのファームウェアは，(tr)uSDXのCATのドキュメントとtrusdx-
 （元々取り付けていたLM386の1番ピンと8番ピンの間のキャパシター(10uF)を，取り付けないことにしました．）   
 ファームウェア"ADX_S_V1.3JP_trusdr-audio.ino"を更新しました．　   
 
+## ADX-S（CRkits共同購入プロジェクト）の改造の追加2 （2024/3/21）
+ファームウェア"ADX_S_V1.3JP_trusdr-audio.ino"を更新しました．   
+FT8CNでも安定して動くと思います．   
+
+trusdx-audioの実行ファイルの代替え"trusdx_adx.exe.zip"をアップロードしました．   
+解凍後に,インストール済みの"C:\Program Files (x86)\truSDX Driver\truSDX Driver.exe"の代わりに使ってください．   
+元の実行ファイルとは，名前を変えています．   
+送信中に起きることがあるWSJT-XからのCAT pollingを，RIGに送らずにこのプログラム中で返信します．   
+このため，CAT pollingにより生じる送信周波数の乱れを防いでいます．   
