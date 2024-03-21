@@ -49,8 +49,11 @@ ADX-Sのファームウェアは，(tr)uSDXのCATのドキュメントとtrusdx-
 	https://github.com/threeme3/trusdx-audio/
 	元々のtrusdx-audioと(tr)uSDXの組み合わせでは，PTT方式はWindowsではCATとRTS/DTRが使用可能です．
 	しかし，今回のADX-Sのファームウェアの都合上，PTT方式はCATのみの対応です． 
-	リグ設定は”TS480"を選択してください(実はなぜかTS2000でも動く)．
-	PC側でtrusdx-audioプログラムを作動させなければ，元のままです（CATのリグ設定TS2000でも動きました. PTTはVOXに設定）．    
+	リグ設定は”TS480"を選択してください．
+ 	ハンドシェイクはなし(N)にし，制御信号の強制設定はしないでください．
+  
+	PC側でtrusdx-audioプログラムを作動させなければ，元のままで動きます．
+ 	（CATを使用する場合のリグ設定はTS480， ハンドシェイクはなし(N)，制御信号の強制設定はしない，PTTはVOXに設定）．
 	Hamlibの挙動はよくわかりません．
 
   	AndroidスマホのFT8CNでも，リグ設定を"(tr)uSDX(audio over cat)"に設定すれば使用可能でした(PTT方式は"CAT")．   
@@ -68,6 +71,7 @@ ADX-Sのファームウェアは，(tr)uSDXのCATのドキュメントとtrusdx-
 
 ## ADX-S（CRkits共同購入プロジェクト）の改造の追加2 （2024/3/21）
 ファームウェア"ADX_S_V1.3JP_trusdr-audio.ino"を更新しました．   
+CATルーチンを少し変更しています．   
 FT8CNでも安定して動くと思います．   
 
 trusdx-audioの実行ファイルの代替え"trusdx_adx.exe.zip"をアップロードしました．   
