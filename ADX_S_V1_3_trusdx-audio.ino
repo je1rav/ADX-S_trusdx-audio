@@ -273,6 +273,8 @@ void loop()
       digitalWrite(FT4, HIGH); 
       digitalWrite(FT8, LOW); 
       cat_stat = 1; 
+      Audio_stream = 2;
+      RX_streaming = 1;
     }
     CAT_control(); 
   }
@@ -1218,12 +1220,8 @@ void init_ADC(void)
 }
 
 void trusdr_audio(int mono){
-   	
-  if ((mono_prev_p < 0) && (mono >= 0)) {
-    //if ((mono == 0) && (((float)mono_prev_p * 1.8 - (float)mono_preprev_p < 0.0) || ((float)mono_prev_p * 2.02 - (float)mono_preprev_p > 0.0))) {    //Detect the sudden drop to zero due to the end of transmission
-    //		break;
-    //}
 
+  if ((mono_prev_p < 0) && (mono >= 0)) {
     int16_t difference = mono - mono_prev_p;
     float delta_p = (float)mono_prev_p / (float)difference;
     float period = (1.0 + delta_prev_p) + (float)sampling_p - delta_p;
@@ -1243,9 +1241,6 @@ void trusdr_audio(int mono){
   }
 
   if ((mono_prev_n > 0) && (mono <= 0)) {
-    //if ((mono == 0) && (((float)mono_prev_n * 1.8 - (float)mono_preprev_n > 0.0) || ((float)mono_prev_n * 2.02 - (float)mono_preprev_n < 0.0))) {    //Detect the sudden drop to zero due to the end of transmission
-    //	break;
-    //}
     int16_t difference = mono - mono_prev_n;
     float delta_n = (float)mono_prev_n / (float)difference;
     float period = (1.0 + delta_prev_n) + (float)sampling_n - delta_n;
