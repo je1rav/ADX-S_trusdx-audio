@@ -71,7 +71,7 @@ ADX-Sのファームウェアは，(tr)uSDXのCATのドキュメントとtrusdx-
 FT8CNでも安定して動くと思います．   
 
 trusdx-audioの実行ファイルの代替え"trusdx_adx.exe.zip"をアップロードしました．   
-ソースは，https://github.com/je1rav/trusdx-audio/ 
+ソースは，https://github.com/je1rav/trusdx-audio/   
 解凍後に,インストール済みの"C:\Program Files (x86)\truSDX Driver\truSDX Driver.exe"の代わりに使ってください．   
 元の実行ファイルとは，名前を変えています．   
 送信中に起きることがあるWSJT-XからのCAT pollingを，RIGに送らずにこのプログラム中で返信します．   
