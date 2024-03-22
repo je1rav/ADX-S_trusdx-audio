@@ -1,12 +1,12 @@
 //*********************************************************************************************************
 //********************* ADX-S - ARDUINO DIGITAL MODES 4 BAND HF TRANSCEIVER ***************************
 //********************************* Write up start: 02/01/2022 ********************************************
-// FW VERSION: ADX_S_V1.3_AudioStream by JE1RAV
+// FW VERSION: ADX_S_V1.3_trusdr-audio by JE1RAV
 // Based on ADX-S V1.3 Release:
 //  -  Modified to use the audio streaming over CAT, which is now used in (tr)uSDX developed by DL2MAN and PE1NNZ.
 // The PC-side code originally written by SQ3SWF are developed and packaged by PE1NNZ. https://github.com/threeme3/trusdx-audio
 // To adapt the PC-side code, the firmware of ADX-S has been modified based on the audioStreamArduino by Idan Regev. https://github.com/idanre1/audioStreamArduino/
-// The CAT emulation for the audio streaming over CAT is changed from TS-2000 to TS-480 which is emuelated in (tr)uSDX, because FT8CN supports audio streaming over CAT on (tr)uSDX.
+// The CAT emulation is changed from TS-2000 to TS-480 which is emuelated in (tr)uSDX, because FT8CN supports audio streaming over CAT on (tr)uSDX.
 //
 // FW VERSION: ADX_S_V1.3 - Version release date: 08/08/2023
 // Barb(Barbaros ASUROGLU) - WB2CBA - 2022
@@ -107,27 +107,21 @@ long ADC_offset;
 int Audio_stream = 0;
 int RX_streaming = 0;
 int TX_streaming = 0;
-char ser_buff[1];
 int TX_streaming_counter = 0;
-int TX_streaming_fault = 0;
-int CAT_fault = 0;
-String CAT_frequency;
 
 unsigned long old_freq;
-
-	int16_t mono_prev_p=0; 
-	float delta_prev_p=0;
-	uint32_t sampling_p=0;
-	uint8_t cycle_p = 0;
-	int16_t mono_prev_n=0;
-	float delta_prev_n=0;
-	uint32_t sampling_n=0;
-	uint8_t cycle_n = 0;
-	uint32_t mean_audio_freq_p = 0;
-  uint32_t mean_audio_freq_n = 0;
-	uint32_t mean_audio_freq;
-  unsigned long time_prev = 0;
-	uint8_t TX_started = 0;
+int16_t mono_prev_p=0; 
+float delta_prev_p=0;
+uint32_t sampling_p=0;
+uint8_t cycle_p = 0;
+int16_t mono_prev_n=0;
+float delta_prev_n=0;
+uint32_t sampling_n=0;
+uint8_t cycle_n = 0;
+uint32_t mean_audio_freq_p = 0;
+uint32_t mean_audio_freq_n = 0;
+uint32_t mean_audio_freq;
+unsigned long time_prev = 0;
 
 unsigned long Cal_freq = 1000000UL; // Calibration Frequency: 1 Mhz = 1000000 Hz
 unsigned long F_FT8;
@@ -185,7 +179,6 @@ void setup()
   digitalWrite(ATT,attnow);    //default no ATT.
 
   //SET UP SERIAL FOR CAT CONTROL
-
   Serial.begin(115200); 
   Serial.setTimeout(3); 
 
@@ -262,12 +255,10 @@ void setup()
   pinMode(FSK_INPUT, INPUT); //PD7 = AN1 = HiZ, PD6 = AN0 = 0
   digitalWrite(RX,LOW);
 
-  //to RX
+  //set into RX
   RX_receive();
   Set_frequency();
-  CAT_frequency = String("00000000000").substring(0,11-(String(freq).length())) + String(freq);
 }
- 
 //**************************[ END OF SETUP FUNCTION ]************************
 
 //***************************[ Main LOOP Function ]**************************
@@ -277,8 +268,6 @@ void loop()
 
   if (Serial.available() > 0){
     if (cat_stat == 0){
-      //  si5351.set_freq(freq * 100ULL, SI5351_CLK1);
-      //  si5351.output_enable(SI5351_CLK1, 1);   //RX on
       digitalWrite(WSPR, LOW); 
       digitalWrite(JS8, HIGH); 
       digitalWrite(FT4, HIGH); 
@@ -342,116 +331,115 @@ void loop()
   // The following code is from JE1RAV https://github.com/je1rav/QP-7C
   //(Using 3 cycles for timer sampling to improve the precision of frequency measurements)
   //(Against overflow in low frequency measurements)
-  
-  int FSK = 1;
-  int FSKtx = 0;
+    
+    int FSK = 1;
+    int FSKtx = 0;
 
-  while (FSK>0){
-    int Nsignal = 10;
-    int Ncycle01 = 0;
-    int Ncycle12 = 0;
-    int Ncycle23 = 0;
-    int Ncycle34 = 0;
-    unsigned int d1=1,d2=2,d3=3,d4=4;
+    while (FSK>0){
+      int Nsignal = 10;
+      int Ncycle01 = 0;
+      int Ncycle12 = 0;
+      int Ncycle23 = 0;
+      int Ncycle34 = 0;
+      unsigned int d1=1,d2=2,d3=3,d4=4;
   
-    TCNT1 = 0;  
-    while (ACSR &(1<<ACO)){
-      if (TIFR1&(1<<TOV1)) {
-        Nsignal--;
-        TIFR1 = _BV(TOV1);
-        if (Nsignal <= 0) {break;}
-      }
-    }
-    while ((ACSR &(1<<ACO))==0){
-      if (TIFR1&(1<<TOV1)) {
-        Nsignal--;
-        TIFR1 = _BV(TOV1);
-        if (Nsignal <= 0) {break;}
-      }
-    }
-    if (Nsignal <= 0) {break;}
-    TCNT1 = 0;
-    while (ACSR &(1<<ACO)){
+      TCNT1 = 0;  
+      while (ACSR &(1<<ACO)){
         if (TIFR1&(1<<TOV1)) {
-        Ncycle01++;
-        TIFR1 = _BV(TOV1);
-        if (Ncycle01 >= 2) {break;}
+          Nsignal--;
+          TIFR1 = _BV(TOV1);
+          if (Nsignal <= 0) {break;}
+        }
       }
-    }
-    d1 = ICR1;  
-    while ((ACSR &(1<<ACO))==0){
-      if (TIFR1&(1<<TOV1)) {
-        Ncycle12++;
-        TIFR1 = _BV(TOV1);
-        if (Ncycle12 >= 3) {break;}      
+      while ((ACSR &(1<<ACO))==0){
+        if (TIFR1&(1<<TOV1)) {
+          Nsignal--;
+          TIFR1 = _BV(TOV1);
+          if (Nsignal <= 0) {break;}
+        }
       }
-    } 
-    while (ACSR &(1<<ACO)){
-      if (TIFR1&(1<<TOV1)) {
-        Ncycle12++;
-        TIFR1 = _BV(TOV1);
-        if (Ncycle12 >= 6) {break;}
+      if (Nsignal <= 0) {break;}
+      TCNT1 = 0;
+      while (ACSR &(1<<ACO)){
+          if (TIFR1&(1<<TOV1)) {
+          Ncycle01++;
+          TIFR1 = _BV(TOV1);
+          if (Ncycle01 >= 2) {break;}
+        }
       }
-    }
-    d2 = ICR1;
-    while ((ACSR &(1<<ACO))==0){
-      if (TIFR1&(1<<TOV1)) {
+      d1 = ICR1;  
+      while ((ACSR &(1<<ACO))==0){
+        if (TIFR1&(1<<TOV1)) {
+          Ncycle12++;
+          TIFR1 = _BV(TOV1);
+          if (Ncycle12 >= 3) {break;}      
+        }
+      } 
+      while (ACSR &(1<<ACO)){
+        if (TIFR1&(1<<TOV1)) {
+          Ncycle12++;
+          TIFR1 = _BV(TOV1);
+          if (Ncycle12 >= 6) {break;}
+        }
+      }
+      d2 = ICR1;
+      while ((ACSR &(1<<ACO))==0){
+        if (TIFR1&(1<<TOV1)) {
+          Ncycle23++;
+          TIFR1 = _BV(TOV1);
+          if (Ncycle23 >= 3) {break;}
+        }
+      } 
+      while (ACSR &(1<<ACO)){
+        if (TIFR1&(1<<TOV1)) {
         Ncycle23++;
         TIFR1 = _BV(TOV1);
-        if (Ncycle23 >= 3) {break;}
-      }
-    } 
-    while (ACSR &(1<<ACO)){
-      if (TIFR1&(1<<TOV1)) {
-      Ncycle23++;
-      TIFR1 = _BV(TOV1);
-      if (Ncycle23 >= 6) {break;}
-      }
-    } 
-    d3 = ICR1;
-    while ((ACSR &(1<<ACO))==0){
-      if (TIFR1&(1<<TOV1)) {
-        Ncycle34++;
-        TIFR1 = _BV(TOV1);
-        if (Ncycle34 >= 3) {break;}
-      }
-    } 
-    while (ACSR &(1<<ACO)){
-      if (TIFR1&(1<<TOV1)) {
-        Ncycle34++;
-        TIFR1 = _BV(TOV1);
-        if (Ncycle34 >= 6) {break;}
-      }
-    } 
-    d4 = ICR1;
-    unsigned long codefreq1 = 1600000000/(65536*Ncycle12+d2-d1);
-    unsigned long codefreq2 = 1600000000/(65536*Ncycle23+d3-d2);
-    unsigned long codefreq3 = 1600000000/(65536*Ncycle34+d4-d3);
-    unsigned long codefreq = (codefreq1 + codefreq2 + codefreq3)/3;
-    if (d3==d4) codefreq = 5000;     
-    if ((codefreq < 310000) and  (codefreq >= 10000)) {
-      if (FSKtx == 0 && crossbandcheck()){
-        TX_State = 1;
-        digitalWrite(RX,LOW);
-        digitalWrite(TX,HIGH);
-        delay(10);
-        si5351.output_enable(SI5351_CLK1, 0);   //RX off
-        si5351.output_enable(SI5351_CLK2, 0);   //RX IF off as well, added by BD6CR
-        si5351.output_enable(SI5351_CLK0, 1);   // TX on
-      }
-      si5351.set_freq((freq * 100 + codefreq), SI5351_CLK0);  
+        if (Ncycle23 >= 6) {break;}
+        }
+      } 
+      d3 = ICR1;
+      while ((ACSR &(1<<ACO))==0){
+        if (TIFR1&(1<<TOV1)) {
+          Ncycle34++;
+          TIFR1 = _BV(TOV1);
+          if (Ncycle34 >= 3) {break;}
+        }
+      } 
+      while (ACSR &(1<<ACO)){
+        if (TIFR1&(1<<TOV1)) {
+          Ncycle34++;
+          TIFR1 = _BV(TOV1);
+          if (Ncycle34 >= 6) {break;}
+        }
+      } 
+      d4 = ICR1;
+      unsigned long codefreq1 = 1600000000/(65536*Ncycle12+d2-d1);
+      unsigned long codefreq2 = 1600000000/(65536*Ncycle23+d3-d2);
+      unsigned long codefreq3 = 1600000000/(65536*Ncycle34+d4-d3);
+      unsigned long codefreq = (codefreq1 + codefreq2 + codefreq3)/3;
+      if (d3==d4) codefreq = 5000;     
+      if ((codefreq < 310000) and  (codefreq >= 10000)) {
+        if (FSKtx == 0 && crossbandcheck()){
+          TX_State = 1;
+          digitalWrite(RX,LOW);
+          digitalWrite(TX,HIGH);
+          delay(10);
+          si5351.output_enable(SI5351_CLK1, 0);   //RX off
+          si5351.output_enable(SI5351_CLK2, 0);   //RX IF off as well, added by BD6CR
+          si5351.output_enable(SI5351_CLK0, 1);   // TX on
+        }
+        si5351.set_freq((freq * 100 + codefreq), SI5351_CLK0);  
 
-      if(Serial.available() > 0) CAT_control(); 
+        if(Serial.available() > 0) CAT_control(); 
 
-      FSKtx = 1;
+        FSKtx = 1;
+        }
+        else{
+        FSK--;
+      }
     }
-    else{
-      FSK--;
-    }
-  }
-
-  RX_receive();
-  FSKtx = 0; 
+    RX_receive();
+    FSKtx = 0; 
   }
 }
 //*********************[ END OF MAIN LOOP FUNCTION ]*************************
@@ -463,13 +451,19 @@ void loop()
 void CAT_control(void)
 { 
 //------------ CAT Variables
-String received;
-String receivedPart0;
-String command;
-String parameter;
-String sent;
+  String received = "";
+  String receivedPart0;
+  String receivedPart1;
+  String receivedPart2;    
+  String command;
+  String command2;  
+  String command3;  
+  String parameter;
+  String parameter2; 
+  String parameter3; 
+  String sent = "";
+  String sent2;
 
-  received = "";
   if (TX_streaming == 1){
     while ((Serial.available() > 0)) {
       uint8_t received_data = (uint8_t) Serial.read();
@@ -482,6 +476,7 @@ String sent;
       }
     }
   }
+
   if (TX_streaming == 1){
     return;
   }
@@ -490,53 +485,105 @@ String sent;
     stop_RX_streaming();
     Serial.flush();
     Serial.print(";"); 
-    delay(1);
   }
 
+  if ((Serial.available() > 0)) {
+    received = Serial.readString();  
+  }
+  
+  received.toUpperCase();  
+  received.replace("\n","");  
+
   String data = "";
-  char c;
-  while (Serial.available() > 0) {
-    c = Serial.read();
-    if (c != 59)
+  int bufferIndex = 0;
+  for (int i = 0; i < received.length(); ++i)
+  {
+    char c = received[i];
+    if (c != ';')
     {
       data += c;
     }
     else if (data != "")
     {
-      data += '\0';
-      receivedPart0 = data;
-      receivedPart0.toUpperCase();  
-      receivedPart0.replace("\n","");
-      break;
+      if (bufferIndex == 0)
+      {  
+        data += '\0';
+        receivedPart0 = data;
+        bufferIndex++;
+        data = "";
+      }
+      else if (bufferIndex == 1)
+      {  
+        data += '\0';
+        receivedPart1 = data;
+        bufferIndex++;
+        data = "";
+      }
+      else
+      {  
+        data += '\0';
+        receivedPart2 = data;
+        bufferIndex++;
+        data = "";
+      }
     }
   }
 
-  if (receivedPart0.length() < 2) {
+  if (receivedPart0.length() <2 || receivedPart0.length() > 14) {
     return;
   }
-  //Serial.print(receivedPart0);
+
   command = receivedPart0.substring(0,2);
   parameter = receivedPart0.substring(2,receivedPart0.length());
+  command2 = receivedPart1.substring(0,2);    
+  parameter2 = receivedPart1.substring(2,receivedPart1.length());
+  command3 = receivedPart2.substring(0,2);    
+  parameter3 = receivedPart2.substring(2,receivedPart2.length());
 
-  if (command == "FA")  
+  if (command == "TX")
+  {   
+    if (crossbandcheck()){      
+      RX_streaming = 0;
+      if (Audio_stream == 2){
+        TX_streaming = 1;
+        TX_streaming_counter = 0;
+      }
+      else {
+        TX_transmit();
+      }
+      sent = "TX0;";
+    }
+  }
+
+  else if (command == "RX")  
+  {  
+    RX_receive();
+    TX_streaming = 0;
+    if (Audio_stream == 2){
+      RX_streaming = 1;
+    }
+    sent = "RX0;";
+  }
+
+  else if (command == "FA")  
   {  
     if (parameter != "")  
     {  
       freq = parameter.toInt();
-      //Set_frequency();
+      Set_frequency();
       RX_receive();
-      CAT_frequency = String("00000000000").substring(0,11-(String(freq).length()))   
-          + String(freq);
       //VfoRx = VfoTx;   
     }
     sent = "FA" // Return 11 digit frequency in Hz.  
-          + CAT_frequency + ";";    
+          + String("00000000000").substring(0,11-(String(freq).length()))   
+          + String(freq) + ";";     
   }
 
   if (command == "FB")  
   {  
     sent = "FB" // Return 11 digit frequency in Hz.  
-          + CAT_frequency + ";"; 
+          + String("00000000000").substring(0,11-(String(freq).length()))   
+          + String(freq) + ";";     
   }
 
   else if (command == "PS")  
@@ -561,16 +608,16 @@ String sent;
     if (TX_State == 1)
     {  
       sent = "IF" // Return 11 digit frequency in Hz.  
-          //+ String("00000000000").substring(0,11-(String(freq).length())) + String(freq)
+          + String("00000000000").substring(0,11-(String(freq).length()))   
           //+ String(freq) + "0000" + "+" + "00000" + "0" + "0" + "0" + "00" + "1" + String(CAT_mode) + "0" + "0" + "0" + "0" + "00" + "0" + ";";   //TS-2000
-          + CAT_frequency + "00000+000000000120000000;";   //TS-480 
+          + String(freq) + "00000+000000000120000000;";   //TS-480 
     } 
     else
     {  
       sent = "IF" // Return 11 digit frequency in Hz.  
-          //+ String("00000000000").substring(0,11-(String(freq).length()))  + String(freq)
+          + String("00000000000").substring(0,11-(String(freq).length()))   
           //+ String(freq) + "0000" + "+" + "00000" + "0" + "0" + "0" + "00" + "0" + String(CAT_mode) + "0" + "0" + "0" + "0" + "00" + "0" + ";";   //TS-2000
-          + CAT_frequency + "00000+000000000020000000;";   //TS-480
+          + String(freq) + "00000+000000000020000000;";   //TS-480
     } 
   }
   
@@ -583,29 +630,6 @@ String sent;
     {  
       sent = "FW0000;";
     }
-
-  else if (command == "TX")
-  {   
-    if (crossbandcheck()){      
-      TX_transmit();
-      RX_streaming = 0;
-      if (Audio_stream == 2){
-        TX_streaming = 1;
-        TX_streaming_counter = 0;
-      }
-      sent = "TX0;";
-    }
-  }
-
-  else if (command == "RX")  
-  { 
-    RX_receive();
-    TX_streaming = 0;
-    if (Audio_stream == 2){
-      RX_streaming = 1;
-    }
-    sent = "RX0;";
-  }
 
   else if (command == "UA")
   {
@@ -628,11 +652,83 @@ String sent;
     }
   }
 
+//------------------------------------------------------------------------------      
+  if (command2 == "ID")  
+  {  
+    //sent2 = "ID019;";   //TS-2000
+    sent2 = "ID020;";   //TS-480
+  }
+  else if (command2 == "TX")
+  {   
+    if (crossbandcheck()){      
+      RX_streaming = 0;
+      if (Audio_stream == 2){
+        TX_streaming = 1;
+        TX_streaming_counter = 0;
+      }
+      else {
+        TX_transmit();
+      }
+      sent = "TX0;";
+    }
+  }
+  else if (command2 == "RX")  
+  {  
+    RX_receive();
+    TX_streaming = 0;
+    if (Audio_stream == 2){
+      RX_streaming = 1;
+    }
+    sent2 = "RX0;";
+  }
+  else if (command2 == "UA")
+  {
+    {
+      if (parameter2 == "0")  
+      {  
+        Audio_stream = 0;
+        RX_streaming = 0;
+        TX_streaming = 0;
+        start_analog_comparator();
+        //sent2 = "UA0;";
+      }
+      else if ((parameter2 == "1") || (parameter2 == "2"))
+      {  
+        Audio_stream = 2;
+        RX_streaming = 1;
+        //sent2 = "UA2;";
+      }
+    }
+  }
+
+  //------------------------------------------------------------------------------      
+  if (command3 == "UA")   // for FT8CN
+  {
+    {
+      if (parameter3 == "0")  
+      {  
+        Audio_stream = 0;
+        RX_streaming = 0;
+        TX_streaming = 0;
+        start_analog_comparator();
+      }
+      else if ((parameter3 == "1") || (parameter3 == "2"))
+      {  
+        Audio_stream = 2;
+        RX_streaming = 1;
+      }
+    }
+  }
+
+if  (bufferIndex > 0) 
+  if (bufferIndex == 2) Serial.print(sent2);
+  Serial.flush();
   Serial.print(sent);
   Serial.flush();
   if (RX_streaming == 1){
     RX_receive();
     Serial.write("US");
+    Serial.flush();
     start_RX_streaming();
   }
   if (TX_streaming == 2){
@@ -778,7 +874,6 @@ return (0);
 
 
 //************************************[ MODE Assign ]**********************************
-
 void Mode_assign(void) 
 {
   addr = 40;
@@ -971,10 +1066,8 @@ void Band_Select()
 }
 
 //************************** [SI5351 VFO Calibration Function] ************************
-
 void Calibration() 
 {
-
   ledalloff();
   digitalWrite(WSPR, HIGH); 
   digitalWrite(FT8, HIGH);
@@ -1018,16 +1111,21 @@ void Calibration()
 }
 
 //********** [ ADDED FUNCTIONS for audio stream over CAT] ************
+//********************************************************************
 void RX_receive()
 {
   si5351.output_enable(SI5351_CLK0, 0);   //TX off
+  delay(1);
   digitalWrite(TX,LOW);
   digitalWrite(RX,HIGH);
+  delay(3);
   si5351.output_enable(SI5351_CLK1, 1);   //RX on
+  delay(1);
   if (bfo == 1) {
   si5351.output_enable(SI5351_CLK2, 1);   //RX IF on as well, added by BD6CR
   }
   TX_State = 0;
+  delay(1);
 }
 
 void TX_transmit()
@@ -1039,6 +1137,7 @@ void TX_transmit()
       si5351.output_enable(SI5351_CLK2, 0);   //RX IF off as well, added by BD6CR
     }
     si5351.output_enable(SI5351_CLK0, 1);   //TX on
+    delay(10);
     TX_State = 1;
 }
 
@@ -1128,22 +1227,26 @@ void init_ADC(void)
   // ----------------ADC for receiver----------------------
   ADCSRA = ADCSRA & 0xf8;
   ADCSRA = ADCSRA | 0x04;    //prescaler = 16
+  //ADCSRA = ADCSRA | 0x05;    //prescaler = 32
+
   long long int RXsignal = 0;
-  for (long int i =0; i < 500; i++){
+  for (long int i =0; i < 1000; i++){
     RXsignal += analogRead(ADC_INPUT);
     delay(1);
   }
-  ADC_offset = RXsignal /500;
+  ADC_offset = RXsignal /1000;
+  //Serial.println(ADC_offset);
 }
 
 void trusdr_audio(int mono){
-   	
+
   if ((mono_prev_p < 0) && (mono >= 0)) {
     int16_t difference = mono - mono_prev_p;
     float delta_p = (float)mono_prev_p / (float)difference;
     float period = (1.0 + delta_prev_p) + (float)sampling_p - delta_p;
     int32_t audio_freq_p = TX_SAMPLING_RATE/period; // in Hz    
-    if ((audio_freq_p>200) && (audio_freq_p<2850) && (difference > 3)) {   
+    if ((audio_freq_p>200) && (audio_freq_p<2850) && (difference > 3)) {
+      //audio_frequency_p[cycle_p] = audio_freq_p;   
       mean_audio_freq_p += audio_freq_p;
       cycle_p++;
     }
@@ -1163,6 +1266,7 @@ void trusdr_audio(int mono){
     int32_t audio_freq_n = TX_SAMPLING_RATE/period; // in Hz    
 
     if ((audio_freq_n>200) && (audio_freq_n<2850) && (difference < -3)){
+      //audio_frequency_n[cycle_n] = audio_freq_n;   
       mean_audio_freq_n += audio_freq_n;
       cycle_n++;
     }
@@ -1174,35 +1278,20 @@ void trusdr_audio(int mono){
     sampling_n++;
     mono_prev_n = mono;
   }
-
+  
   unsigned long time_now = millis();
-  if (TX_streaming_counter == 10) { //delay to start tramsmit at the begining of the transmission
+  if (TX_streaming_counter == 10){ //delay to start tramsmit at the begining of the transmission
     TX_transmit();
   }
-  if ((time_now - time_prev) > 10) {
+  if (((time_now - time_prev) > 10) && ((cycle_p + cycle_n) > 4)) {
+    TX_streaming_counter++;
+    if (TX_streaming_counter > 254) TX_streaming_counter = 11;
+    mean_audio_freq = (mean_audio_freq_p + mean_audio_freq_n)/(cycle_p + cycle_n);
+    si5351.set_freq((freq * 100ULL + mean_audio_freq * 100ULL), SI5351_CLK0);
     time_prev = time_now;
-    if ((cycle_p + cycle_n) > 4) {
-      TX_streaming_counter++;
-      if (TX_streaming_counter > 254) TX_streaming_counter = 21;
-      mean_audio_freq = (mean_audio_freq_p + mean_audio_freq_n)/(cycle_p + cycle_n);
-      si5351.set_freq((freq * 100ULL + mean_audio_freq * 100ULL), SI5351_CLK0);
-      mean_audio_freq_p = 0;
-      mean_audio_freq_n = 0;
-      cycle_p = 0;
-      cycle_n = 0;
-      TX_streaming_fault = 0;
-    }
-    else {
-      if (TX_streaming_counter > 20) {
-        if (TX_streaming_fault > 50){     // if not go into RX mode with no signal over 500mS, force RX mode
-          TX_streaming_fault = 0;
-          RX_receive();
-          TX_streaming = 0;
-        }
-        else {
-          TX_streaming_fault++;
-        }
-      }
-    }
+    mean_audio_freq_p = 0;
+    mean_audio_freq_n = 0;
+    cycle_p = 0;
+    cycle_n = 0;
   }
 }
