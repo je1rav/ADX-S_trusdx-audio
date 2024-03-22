@@ -257,6 +257,7 @@ void setup()
   TCCR1B = 0x81; // Timer1 Input Capture Noise Canceller
   ACSR |= (1<<ACIC);  // Analog Comparator Capture Input
 */
+  start_analog_comparator();
 
   pinMode(FSK_INPUT, INPUT); //PD7 = AN1 = HiZ, PD6 = AN0 = 0
   digitalWrite(RX,LOW);
