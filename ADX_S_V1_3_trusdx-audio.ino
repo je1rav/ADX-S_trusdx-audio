@@ -1137,7 +1137,7 @@ void TX_transmit()
       si5351.output_enable(SI5351_CLK2, 0);   //RX IF off as well, added by BD6CR
     }
     si5351.output_enable(SI5351_CLK0, 1);   //TX on
-    delay(10);
+    //delay(10);
     TX_State = 1;
 }
 
