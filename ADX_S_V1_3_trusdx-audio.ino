@@ -1193,7 +1193,6 @@ void start_RX_streaming()
   TIMSK1 |= _BV(OCIE1A);
   //Enable Interrupts
   sei();
-  RXsignal_Max = 0;
   AGC_counter = 0;  
 }
 
@@ -1217,7 +1216,6 @@ ISR(TIMER1_COMPA_vect) {
       Serial.print("US");
     }
     if (AGC_counter > 117180) {   // AGC will be clear every 15s
-      RXsignal_Max = 0;
       AGC_counter = 0;
       AGC_inv_gain = 1;
     }
