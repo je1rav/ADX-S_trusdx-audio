@@ -104,6 +104,9 @@ int attnow = 0; //0 = no ATT, 1 = ATT
 
 //------------ Audio Stream Variables  //  added by JE1RAV
 long ADC_offset;
+uint32_t AGC_counter = 0;
+int AGC_inv_gain = 1;
+
 int Audio_stream = 0;
 int RX_streaming = 0;
 int TX_streaming = 0;
@@ -1189,7 +1192,9 @@ void start_RX_streaming()
   // Enable interrupt when TCNT1 == OCR1A
   TIMSK1 |= _BV(OCIE1A);
   //Enable Interrupts
-  sei();  
+  sei();
+  RXsignal_Max = 0;
+  AGC_counter = 0;  
 }
 
 void stop_RX_streaming(void) {
@@ -1205,13 +1210,20 @@ void stop_RX_streaming(void) {
 // This is called at 7812 Hz to send the received data.
 ISR(TIMER1_COMPA_vect) {
   if (TX_State == 0){
-    int RXsignal = analogRead(ADC_INPUT);
+    int RXsignal = analogRead(ADC_INPUT) - ADC_offset;
     if (RX_streaming == 0)
     {
       RX_streaming = 1;
       Serial.print("US");
     }
-    uint8_t RXsent = (RXsignal-ADC_offset)/4 + 128;  
+    if (AGC_counter > 117180) {   // AGC will be clear every 15s
+      RXsignal_Max = 0;
+      AGC_counter = 0;
+      AGC_inv_gain = 1;
+    }
+    AGC_counter++;
+    if (RXsignal/AGC_inv_gain > 128) AGC_inv_gain = AGC_inv_gain * 2;
+    uint8_t RXsent = RXsignal/AGC_inv_gain + 128;  
     if (RXsent == 59) RXsent = 58;
     Serial.write(RXsent);
   }
@@ -1280,7 +1292,7 @@ void trusdr_audio(int mono){
   }
   
   unsigned long time_now = millis();
-  if (TX_streaming_counter == 10){ //delay to start tramsmit at the begining of the transmission
+  if (TX_streaming_counter == 10) { //delay to start tramsmit at the begining of the transmission
     TX_transmit();
   }
   if (((time_now - time_prev) > 10) && ((cycle_p + cycle_n) > 4)) {
