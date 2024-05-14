@@ -94,7 +94,7 @@ ADCの感度を自動調整するようにしました．
 　　　
 　　　
 
-## ADX_S_V2.0_trusdr-audio
+# ADX_S_V2.0_trusdr-audio
 ADX-S ver2.0がリリースされました．  
 ADX-S ver1で順次行われていた種々の改良に加えてLPFモジュールのバンド自動認識機能が装備され，Audio Adapter Cableが付属しています．  
 また，オプションとしてBluetoothモジュールの搭載が可能となっています．  
