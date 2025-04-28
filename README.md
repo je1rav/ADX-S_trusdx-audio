@@ -10,7 +10,10 @@ ADX-Sは，uSDXプロジェクトの中でWB2CBAが開発したシンプルな�
 これは，"trusdx-audio"と呼ばれ，PC側のpythonプログラムと(tr)uSDX側のファームウェアによって実現されています．  
 PC側のpythonプログラムはOlgierd(https://github.com/olgierd/trusdx-audio/
  )によるオリジナル版を，PE1NNZ(uSDXのファームウェア開発者，threeme3)が発展させ，Windows版のインストーラー付きのパッケージとして配布されています．  
-https://github.com/threeme3/trusdx-audio/  （trusdx-audioの詳細はこれらのページをご覧ください．）  
+<s>https://github.com/threeme3/trusdx-audio/  （trusdx-audioの詳細はこれらのページをご覧ください．）</s>  
+現在は，(tr)uSDXのサイトhttps://dl2man.de/4-trusdx-manual/
+で配布されています．
+
 
 これを利用して，ADX-Sでも同様にUSBケーブル1本で，Audio信号伝送とCATを同時に行うことにしました．  
 送信周波数の決定手法は，https://github.com/je1rav/QP-7C_RP2040
